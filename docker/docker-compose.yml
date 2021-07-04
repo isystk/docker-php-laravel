@@ -1,0 +1,74 @@
+version: '3'
+
+services:
+
+  apache:
+    image: laravel/apache
+    container_name: laravel-apache
+    build:
+      context: "./apache"
+      dockerfile: "Dockerfile"
+    ports:
+     - "80:80"
+     - "443:443"
+    restart: always
+    volumes:
+     - ./apache/conf.d:/etc/apache2/conf.d
+     - ./apache/ssl:/etc/apache2/ssl
+     - ./apache/logs:/var/log/apache2
+     - ../htdocs:/var/www/html
+
+  php:
+    image: laravel/php
+    container_name: laravel-php
+    build:
+      context: "./php"
+      dockerfile: "Dockerfile"
+    restart: always
+    volumes:
+     - ./php/logs:/var/log/php
+     - ../htdocs:/var/www/html
+
+  mysql:
+    image: mysql:8.0
+    container_name: laravel-mysql
+    environment:
+      - MYSQL_DATABASE=laravel
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=password
+      - TZ=Asia/Tokyo
+    ports:
+     - "3306:3306"
+    restart: always
+    volumes:
+      - db-store:/var/lib/mysql
+      - ./mysql/logs:/var/log/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+
+  phpmyadmin:
+    image: laravel/phpmyadmin
+    container_name: laravel-phpmyadmin
+    build:
+      context: "./phpmyadmin"
+      dockerfile: "Dockerfile"
+    ports:
+      - 8888:80
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=mysql
+      - PMA_USER=root
+      - PMA_PASSWORD=password
+    volumes:
+      - "./phpmyadmin/sessions:/sessions"
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: laravel-mailhog
+    ports:
+      - 8025:8025
+      - 25:1025
+
+
+volumes:
+  db-store:
